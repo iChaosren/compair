@@ -1,7 +1,7 @@
 import pixelmatch from "pixelmatch";
 import {  } from "puppeteer";
 import * as sharp from "sharp";
-import sleep from "./helpers/sleep";
+import sleep from "../helpers/sleep";
 //require("sharp/build/Release/sharp-darwin-x64.node");
 
 const worker = async () => {

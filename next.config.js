@@ -9,7 +9,7 @@ module.exports = {
         entry() {
           return config.entry().then((entry) => ({
               ...entry,
-              worker: path.resolve(process.cwd(), 'worker.ts')
+              worker: path.resolve(process.cwd(), 'worker/worker.ts')
             })
           );
         }
