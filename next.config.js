@@ -3,6 +3,7 @@ const path = require('path');
 /** @type {import('next').NextConfig} */
 module.exports = {
   webpack: (config, { isServer }) => {
+    return config;
     if (isServer) {
       return {
         ...config,

@@ -1,14 +1,10 @@
 import fs from 'fs';
 import { SESv2Client, SendEmailCommand, SendEmailCommandInput } from "@aws-sdk/client-sesv2";
-import AWSConfig from '../../types/aws-global-config';
+import AWSConfig from '../../../types/aws-global-config';
+import NotificationSender from '../notification-sender';
+import EmailNotification from '../email-notification';
 
-type SendEmailInfo = {
-    to: string[];
-    subject: string;
-    body: string;
-}
-
-const buildEmail = (email: SendEmailInfo): SendEmailCommandInput => ({
+const buildEmail = (email: EmailNotification): SendEmailCommandInput => ({
     Content: {
         Simple: {
             Body: { Text: { Data: email.body } },
@@ -26,13 +22,13 @@ const buildEmail = (email: SendEmailInfo): SendEmailCommandInput => ({
     }
 })
 
-export const sendEmailAsync = async (email: SendEmailInfo) => {
+export const sendEmailAsync = async (email: EmailNotification) => {
     const sesClient = new SESv2Client(AWSConfig);
     const command = new SendEmailCommand(buildEmail(email))
     await sesClient.send(command);
 }
 
-export const sendEmail = (email: SendEmailInfo) => {
+export const sendEmail = (email: EmailNotification) => {
     const sesClient = new SESv2Client(AWSConfig);
     const command = new SendEmailCommand(buildEmail(email))
     sesClient.send(command)
@@ -42,4 +38,10 @@ export const sendEmail = (email: SendEmailInfo) => {
         .catch((e) => {
             console.error(`Email Failed\n${JSON.stringify(e, null, 4)}`);
         });
+}
+
+export default class SESNotificationSender extends NotificationSender {
+    send(notification: EmailNotification): Promise<void> {
+        return sendEmailAsync(notification);
+    }
 }

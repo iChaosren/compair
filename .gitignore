@@ -39,3 +39,5 @@ aws.config.json
 
 # compair
 /db
+
+/worker/dist

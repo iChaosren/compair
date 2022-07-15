@@ -14,3 +14,9 @@ a {
 * {
   box-sizing: border-box;
 }
+
+*, body {
+  font-stretch: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
