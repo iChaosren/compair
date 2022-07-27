@@ -1,7 +1,7 @@
 import dayjs, { Dayjs } from "dayjs";
 
 export default class Frequency {
-    private constructor({
+    constructor({
         minutes = 0,
         hours = 0,
         days = 0 

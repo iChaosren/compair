@@ -19,6 +19,7 @@ export default class Site {
     enabled: boolean = true;
 
     nextExecution(): Dayjs {
+        this.frequency = new Frequency(this.frequency);
         return this.frequency.nextExecution(this.lastChecked ?? this.created);
     }
 }

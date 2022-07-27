@@ -5,7 +5,8 @@ import fs from 'fs/promises';
 import Comparison from '../types/comparison';
 import { v4 as uuid } from 'uuid';
 import sharp from 'sharp';
-import pixelmatch from "pixelmatch";
+// import pixelmatch from "pixelmatch";
+import looksSame from 'looks-same';
 
 export default class PuppetMaster {
     constructor() {
@@ -17,7 +18,7 @@ export default class PuppetMaster {
         this.browser = await puppeteer.launch();
     }
 
-    async open({ url, timeout }: Site) {
+    async open({ url, timeout }: { url: string, timeout: number }) {
         this.page = await this.browser.newPage();
         return this.page.goto(url, { waitUntil: 'networkidle2', timeout, referer: "compair" });
     }
@@ -31,7 +32,7 @@ export default class PuppetMaster {
      * @returns - `true` if the comparison is the same, `false` if not
      */
     async compare(site: Site) {
-        return site.comparison.type === 'html' ? this.compareHtml(site.comparison, site) : this.compareVisual(site.comparison);
+        return site.comparison.type === 'html' ? this.compareHtml(site.comparison, site) : this.compareVisual(site.comparison, site.id);
     }
 
     // INTERNAL
@@ -48,24 +49,47 @@ export default class PuppetMaster {
 
     // INTERNAL
     // UNTESTED
-    private async compareVisual(comparison: Comparison) {
+    private async compareVisual(comparison: Comparison, siteId: string) {
         const screenshot: Buffer = (await this.page.screenshot({
-            path: `screenshot-${uuid()}.png`,
-            fullPage: true,
-            clip: comparison.region ? { x: comparison.region.left, y: comparison.region.top, width: comparison.region.width, height: comparison.region.height } : undefined,
+            path: `site-screenshots/screenshot-${siteId}-new.png`,
+            fullPage: !comparison.region,
+            clip: comparison.region ? comparison.region : undefined,
             type: 'png',
             encoding: 'binary'
         })) as Buffer;
-        const currentImage = await fs.readFile(comparison.current.imagePath);
-        const diffBuffer = Buffer.alloc(screenshot.length);
-
-        const differentPixels = pixelmatch(screenshot, currentImage, diffBuffer, comparison.region ? comparison.region.width : undefined, comparison.region ? comparison.region.height : undefined);
-
-        if(differentPixels > comparison.difference * screenshot.length) {
-            await fs.writeFile(`diff-${uuid()}.png`, diffBuffer);
-            return false;
+        let currentImage : Buffer;
+        if(!comparison.current) {
+            await fs.rename(`site-screenshots/screenshot-${siteId}-new.png`, `site-screenshots/screenshot-${siteId}.png`);
+            comparison.current = {
+                imagePath: `site-screenshots/screenshot-${siteId}.png`
+            };
+            return true;
+        } else {
+            currentImage = await fs.readFile(comparison.current?.imagePath);
         }
-        return true;
+        
+        const imagesEqual = new Promise<boolean>((resolve, reject) => looksSame(currentImage, screenshot, { tolerance: 0.5 }, function (error, result) {
+            if(error) {
+                reject(error);
+            } else {
+                console.debug(result);
+                resolve(result.equal);
+            }
+        }));
+
+        //Debug Only
+        await fs.rename(`site-screenshots/screenshot-${siteId}.png`, `site-screenshots/screenshot-${siteId}-old.png`);
+        
+        await fs.rename(`site-screenshots/screenshot-${siteId}-new.png`, `site-screenshots/screenshot-${siteId}.png`);
+        return imagesEqual;
+    }
+
+    async takeScreenshot() {
+        return (await this.page.screenshot({
+            fullPage: true,
+            type: 'png',
+            encoding: 'binary'
+        })) as Buffer;
     }
 
     async close() {

@@ -1,6 +1,12 @@
 import { v4 as uuid } from 'uuid';
-import { Region } from "sharp";
 import ComparisonValue from "./comparison-value";
+
+export type Region = {
+    x: number;
+    y: number;
+    height: number;
+    width: number;
+}
 
 export type ComparisonType = "html" | "visual"
 

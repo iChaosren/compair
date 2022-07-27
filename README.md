@@ -2,8 +2,8 @@
 
 ## TODO:
 
-- [ ] Core Functionality - get page, compare page, send a notification
-- [ ] Use json db provider for temporary data solution
+- [x] Core Functionality - get page, compare page, send a notification
+- [x] Use json db provider for temporary data solution
 - [ ] Inline code editor for executing actions
 - [ ] Single execution of page retrieve and execute code on page
 

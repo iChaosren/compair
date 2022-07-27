@@ -6,6 +6,7 @@ import TableHandler from '../table-hanlder';
 import { v4 as uuid } from 'uuid';
 import WhereComparer from '../where-comparer';
 import {dynamicImport} from 'tsimportlib';
+//console.log(require('../../../db/db.json'));
 
 export class LowDbTable<T extends keyof DbStructure, K extends DbStructure[T][string]> extends TableHandler<T, K> {
     db: any;
@@ -85,14 +86,23 @@ export class LowDbHandler extends DbHandler {
     db: any;
 
     async init() {
-        // See issue regarding Commonjs dynamic imports: https://github.com/TypeStrong/ts-node/discussions/1290
+        // See issue regarding Commonjs dynamic imports: https://github.com/TypeStrong/ts-node/discussions/1290        
         const { JSONFile, Low } = await dynamicImport('lowdb', module) as typeof import('lowdb');
         const __dirname = dirname(__filename);
-        const dbPath = join(__dirname, '../../../../db/db.json');
+        // const dbPath = join(__dirname, '../../../db/db.json');
+        const dbPath = 'db/db.json';
+        console.log("Loading LowDb File:", dbPath);
         const adapter = new JSONFile(dbPath);
         this.db = new Low(adapter);
         await this.db.read();
-        this.db.data ||= DefaultDb;
+        if(!this.db.data) {
+            this.db.data ||= DefaultDb;
+            await this.db.write();
+        }
+    }
+
+    shouldInit(): boolean {
+        return !this.db?.data;
     }
 
     async refresh(): Promise<void> {

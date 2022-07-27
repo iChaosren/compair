@@ -39,5 +39,5 @@ aws.config.json
 
 # compair
 /db
-
+/site-screenshots
 /worker/dist

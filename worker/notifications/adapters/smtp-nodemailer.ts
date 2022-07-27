@@ -4,22 +4,21 @@ import NotificationSender from "../notification-sender";
 import nodemailer from 'nodemailer';
 import SMTPTransport from "nodemailer/lib/smtp-transport";
 
-export default class GmailNodeMailerNotificationSender extends NotificationSender {
+export default class SmtpNodeMailerNotificationSender extends NotificationSender {
     async send(notification: EmailNotification): Promise<any> {        
+        let testAccount = await nodemailer.createTestAccount();
+
         var smtpTransport = nodemailer.createTransport({
-            service: "gmail",
+            host: process.env.SMTP_SERVER,
+            port: parseInt(process.env.SMTP_PORT),
+            secure: process.env.SMTP_SECURE.toLowerCase() === 'true', // true for 465, false for other ports
             auth: {
-                user: process.env.GMAIL_FROM_EMAIL,
-                pass: process.env.GMAIL_APP_PASSWORD
-            }
-        });
+              user: process.env.SMTP_USERNAME, // generated ethereal user
+              pass: process.env.SMTP_PASSWORD, // generated ethereal password
+            },
+          });
         const result = await new Promise<SMTPTransport.SentMessageInfo>((resolve, reject) => {
-            smtpTransport.sendMail({
-                from: process.env.GMAIL_FROM_EMAIL,
-                to: notification.to,
-                subject: notification.subject,
-                html: notification.body
-            }, function (error, response) {
+            smtpTransport.sendMail({ ...notification, from: process.env.FROM_EMAIL }, function (error, response) {
                 if (error)
                     reject(error);
                 else

@@ -8,6 +8,7 @@ import Site from '../types/site';
 import { LowDbHandler } from './dbs/adapters/low-db';
 import DbHandler from './dbs/db-handler';
 import PuppetMaster from './puppet-master';
+import Recipient from '../types/recipient';
 
 //const Db: DbHandler = new (DbAdapters as any)[`${process.env.DB_HANDLER || 'Low'}DbHandler`]();
 const Db: DbHandler = new LowDbHandler();
@@ -17,7 +18,7 @@ const worker = async () => {
     await Db.init();
     console.log("Init PuppetMaster");
     const puppetMaster = new PuppetMaster();
-    puppetMaster.init();
+    await puppetMaster.init();
 
     const sites = Db.getTable('sites');
     //const scripts = Db.getTable('scripts');
@@ -25,19 +26,24 @@ const worker = async () => {
     console.debug("Sites:", allSites);
 
     while (true) {
+        console.debug('Worker loop');
         const queuedSites: Site[] = [];
         for (const siteId in allSites) {
-            const site = allSites[siteId];
+            var site = allSites[siteId];
+            site.id = siteId;
             if (site.enabled)
-                queuedSites.push(site);
+                queuedSites.push(Object.assign(new Site, site));
         }
+        console.debug('Queued sites:', queuedSites);
         const upcomingExecutions = queuedSites.sort((a, b) => a.nextExecution().isBefore(b.nextExecution()) ? 1 : -1);
-
         if (upcomingExecutions.length > 0) {
 
+            console.debug("Upcoming executions:", upcomingExecutions);
             const nextComparison = upcomingExecutions[0];
 
             const nextExecutionTime = nextComparison.nextExecution().diff(dayjs(), 'milliseconds');
+
+            console.debug("Next execution in:", nextExecutionTime);
             if (nextExecutionTime > 0)
                 await setTimeout(nextExecutionTime);
 
@@ -51,10 +57,14 @@ const worker = async () => {
                 await puppetMaster.open(current);
                 const isSame = await puppetMaster.compare(current);
 
-                if (!isSame)
+                if (!isSame) {
+                    current.recipient = Object.assign(new Recipient, current.recipient);
                     current.recipient.notify(current);
+                }
 
                 await puppetMaster.close();
+                current.lastChecked = dayjs();
+                sites.update(current.id, current);
             }
         } else {
             await sleep(1000);
@@ -62,4 +72,7 @@ const worker = async () => {
     }
 }
 
-worker().catch((e) => console.error(e));
+worker().catch((e) => {
+    console.error(e)
+    process.exit(1);
+});
