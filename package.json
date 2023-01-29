@@ -6,9 +6,11 @@
     "dev:worker": "cross-env NODE_ENV=development ts-node --esm worker/worker.ts",
     "dev": "npm-run-all -p dev:worker dev:app",
     "worker": "cross-env NODE_ENV=production ts-node --esm worker/worker.ts",
+    "server": "node .next/standalone/server.js",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "docker-serve": "npm-run-all -p worker server"
   },
   "dependencies": {
     "@aws-sdk/client-sesv2": "^3.127.0",
@@ -17,12 +19,14 @@
     "@chakra-ui/react": "^2.2.3",
     "@emotion/react": "^11.9.3",
     "@emotion/styled": "^11.9.3",
+    "@monaco-editor/react": "^4.4.6",
     "axios": "^0.27.2",
     "cross-env": "^7.0.3",
     "dayjs": "^1.11.3",
     "framer-motion": "^6.4.3",
     "looks-same": "^7.3.0",
     "lowdb": "^3.0.0",
+    "mongoose": "^6.8.3",
     "next": "^12.2.2",
     "node-notifier": "^10.0.1",
     "nodemailer": "^6.7.7",

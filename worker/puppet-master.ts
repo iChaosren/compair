@@ -23,9 +23,14 @@ export default class PuppetMaster {
         return this.page.goto(url, { waitUntil: 'networkidle2', timeout, referer: "compair" });
     }
 
-    async executeScript(script: Script) {
-        const scriptContent = await fs.readFile(script.path, 'utf8');
-        return (await this.page.evaluate(scriptContent)) as any;
+    async executeScript(script: Script | string) {
+        if(typeof(script) === "string") {
+            return (await this.page.evaluate(script)) as any;
+        }
+        else {
+            const scriptContent = await fs.readFile(script.path, 'utf8');
+            return (await this.page.evaluate(scriptContent)) as any;
+        }
     }
 
     /**
